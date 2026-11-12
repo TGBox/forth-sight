@@ -2,7 +2,8 @@
 
 ## SemVer v1.0.0
 
-- 2026-11-12 (1a04e17): feat: add navigation with outline, workspace symbols, references, rename and call hierarchy, add hover and completion for builtin Forth-2012 and gforth words, add semantic highlighting and snippets, add diagnostics for control structures, unknown words, redefinitions and stack effect mismatches, add gforth REPL commands, split the code into a vscode-independent core and feature providers, replace the extension test with core unit tests, add an ESLint flat config, rewrite the README, add MIT licence file
+- 2026-11-12 (b677dfe): chore: update package-lock for typescript-eslint
+- 2026-11-12 (8178b47): feat: add navigation with outline, workspace symbols, references, rename and call hierarchy, add hover and completion for builtin Forth-2012 and gforth words, add semantic highlighting and snippets, add diagnostics for control structures, unknown words, redefinitions and stack effect mismatches, add gforth REPL commands, split the code into a vscode-independent core and feature providers, replace the extension test with core unit tests, add an ESLint flat config, rewrite the README, add MIT licence file
 
 ## SemVer v0.3.0
 
