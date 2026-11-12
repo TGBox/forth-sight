@@ -68,6 +68,10 @@ Die Stack-Prüfung meldet nur, was sie sicher bestimmen kann: Enthält eine Defi
 - `src/indexService.ts` – hält den Index mit Dateien und ungespeicherten Editorinhalten aktuell.
 - `syntaxes/`, `snippets/`, `language-configuration.json` – deklarative Sprachunterstützung.
 
+## Installation für Endnutzer
+
+Um die Erweiterung in VSCode zu installieren, einfach das Artefakt der [v.1.0.1](https://github.com/TGBox/forth-sight/releases/download/v1.0.1/forth-sight-1.0.1.vsix) herunterladen, den Ordner mit der Datei in VSCode öffnen und per Rechtsklick auf "Install Extension VSIX" klicken. Danach ist das Syntaxhighlighting direkt verfügbar.
+
 ## Entwicklung
 
 ```bash

@@ -2,7 +2,8 @@
 
 ## SemVer v1.0.1
 
-- 2026-11-12 (d5b473c): fix: fix mismatched lockfile
+- 2026-11-12 (260bc55): fix: update README and add an instruction for installing this extension from the artifact in the repo
+- 2026-11-12 (77408dc): fix: fix mismatched lockfile
 
 ## SemVer v1.0.0
 
