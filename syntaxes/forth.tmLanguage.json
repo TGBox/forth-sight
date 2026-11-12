@@ -1,0 +1,159 @@
+{
+    "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+    "name": "Forth",
+    "scopeName": "source.forth",
+    "patterns": [
+        {
+            "include": "#comments"
+        },
+        {
+            "include": "#strings"
+        },
+        {
+            "include": "#definitions"
+        },
+        {
+            "include": "#parsing-words"
+        },
+        {
+            "include": "#control-keywords"
+        },
+        {
+            "include": "#stack-words"
+        },
+        {
+            "include": "#memory-and-math"
+        },
+        {
+            "include": "#numbers"
+        }
+    ],
+    "repository": {
+        "comments": {
+            "patterns": [
+                {
+                    "name": "comment.line.backslash.forth",
+                    "match": "(?<=^|\\s)\\\\(?:\\s.*|$)"
+                },
+                {
+                    "name": "comment.block.parentheses.forth",
+                    "begin": "(?<=^|\\s)\\((?=\\s|$)",
+                    "end": "\\)",
+                    "patterns": [
+                        {
+                            "name": "storage.type.stack-effect.forth",
+                            "match": "--"
+                        }
+                    ]
+                }
+            ]
+        },
+        "strings": {
+            "patterns": [
+                {
+                    "name": "string.quoted.double.forth",
+                    "begin": "(?i)(?<=^|\\s)(\\.|s|c|abort)\"\\s",
+                    "beginCaptures": {
+                        "0": {
+                            "name": "keyword.other.string-prefix.forth"
+                        }
+                    },
+                    "end": "\"",
+                    "endCaptures": {
+                        "0": {
+                            "name": "punctuation.definition.string.end.forth"
+                        }
+                    }
+                }
+            ]
+        },
+        "definitions": {
+            "patterns": [
+                {
+                    "name": "meta.definition.colon.forth",
+                    "match": "(?i)(?<=^|\\s)(:|code)\\s+(\\S+)(?=\\s|$)",
+                    "captures": {
+                        "1": {
+                            "name": "keyword.control.definition.forth"
+                        },
+                        "2": {
+                            "name": "entity.name.function.forth"
+                        }
+                    }
+                },
+                {
+                    "name": "keyword.control.definition.end.forth",
+                    "match": "(?i)(?<=^|\\s)(;|end-code|exit|does>)(?=\\s|$)"
+                },
+                {
+                    "name": "meta.definition.variable.forth",
+                    "match": "(?i)(?<=^|\\s)(variable|2variable|constant|2constant|value|user|create|defer|field:)\\s+(\\S+)(?=\\s|$)",
+                    "captures": {
+                        "1": {
+                            "name": "storage.type.forth"
+                        },
+                        "2": {
+                            "name": "variable.other.forth"
+                        }
+                    }
+                }
+            ]
+        },
+        "parsing-words": {
+            "patterns": [
+                {
+                    "name": "meta.parsing-word.forth",
+                    "match": "(?i)(?<=^|\\s)('|\\['\\]|char|\\[char\\]|postpone|is|to|defer@|defer!)\\s+(\\S+)(?=\\s|$)",
+                    "captures": {
+                        "1": {
+                            "name": "keyword.operator.parsing.forth"
+                        },
+                        "2": {
+                            "name": "constant.other.symbol.forth"
+                        }
+                    }
+                }
+            ]
+        },
+        "control-keywords": {
+            "patterns": [
+                {
+                    "name": "keyword.control.forth",
+                    "match": "(?i)(?<=^|\\s)(\\?do|do|\\+loop|loop|unloop|leave|if|else|then|endif|begin|until|while|repeat|again|case|of|endof|endcase|recurse|immediate|\\[|\\])(?=\\s|$)"
+                }
+            ]
+        },
+        "stack-words": {
+            "patterns": [
+                {
+                    "name": "support.function.stack.forth",
+                    "match": "(?i)(?<=^|\\s)(dup|\\?dup|drop|swap|over|rot|-rot|nip|tuck|pick|roll|2dup|2drop|2swap|2over|>r|r>|r@|2>r|2r>|2r@|depth)(?=\\s|$)"
+                }
+            ]
+        },
+        "memory-and-math": {
+            "patterns": [
+                {
+                    "name": "keyword.operator.forth",
+                    "match": "(?i)(?<=^|\\s)(@|!|\\+!|c@|c!|2@|2!|fill|move|erase|here|allot|,|c,|cells|cell\\+|\\+|-|\\*|/|mod|/mod|\\*/|1\\+|1-|2\\*|2/|lshift|rshift|invert|and|or|xor|=|<>|<|>|<=|>=|0=|0<>|0<|0>|u<|u>|min|max|abs|negate)(?=\\s|$)"
+                }
+            ]
+        },
+        "numbers": {
+            "patterns": [
+                {
+                    "name": "constant.numeric.hex.forth",
+                    "match": "(?<=^|\\s)(\\$|0x)[0-9a-fA-F]+(?=\\s|$)"
+                },
+                {
+                    "name": "constant.numeric.binary.forth",
+                    "match": "(?<=^|\\s)%[01]+(?=\\s|$)"
+                },
+                {
+                    "name": "constant.numeric.decimal.forth",
+                    "match": "(?<=^|\\s)#?-?[0-9]+\\.?([0-9]+)?(?=\\s|$)"
+                }
+            ]
+        }
+    }
+}

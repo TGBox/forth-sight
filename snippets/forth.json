@@ -1,0 +1,129 @@
+{
+  "Colon-Definition": {
+    "prefix": [
+      ":",
+      "def"
+    ],
+    "body": [
+      ": ${1:name} ( ${2:--} )",
+      "  $0 ;"
+    ],
+    "description": "Colon-Definition mit Stack-Kommentar"
+  },
+  "if then": {
+    "prefix": "if",
+    "body": [
+      "if",
+      "  $0",
+      "then"
+    ],
+    "description": "if ... then"
+  },
+  "if else then": {
+    "prefix": "ife",
+    "body": [
+      "if",
+      "  $1",
+      "else",
+      "  $0",
+      "then"
+    ],
+    "description": "if ... else ... then"
+  },
+  "do loop": {
+    "prefix": "do",
+    "body": [
+      "${1:limit} ${2:0} ?do",
+      "  $0",
+      "loop"
+    ],
+    "description": "Zählschleife ?do ... loop"
+  },
+  "begin until": {
+    "prefix": "begin",
+    "body": [
+      "begin",
+      "  $0",
+      "until"
+    ],
+    "description": "begin ... until"
+  },
+  "begin while repeat": {
+    "prefix": "while",
+    "body": [
+      "begin",
+      "  ${1:bedingung}",
+      "while",
+      "  $0",
+      "repeat"
+    ],
+    "description": "begin ... while ... repeat"
+  },
+  "begin again": {
+    "prefix": "again",
+    "body": [
+      "begin",
+      "  $0",
+      "again"
+    ],
+    "description": "Endlosschleife begin ... again"
+  },
+  "case": {
+    "prefix": "case",
+    "body": [
+      "case",
+      "  ${1:wert} of  $2  endof",
+      "  $0",
+      "endcase"
+    ],
+    "description": "case ... of ... endof ... endcase"
+  },
+  "of endof": {
+    "prefix": "of",
+    "body": [
+      "${1:wert} of  $0  endof"
+    ],
+    "description": "of ... endof"
+  },
+  "variable": {
+    "prefix": "var",
+    "body": [
+      "variable ${1:name}"
+    ],
+    "description": "Variable"
+  },
+  "constant": {
+    "prefix": "const",
+    "body": [
+      "${1:wert} constant ${2:name}"
+    ],
+    "description": "Konstante"
+  },
+  "value": {
+    "prefix": "val",
+    "body": [
+      "${1:0} value ${2:name}"
+    ],
+    "description": "Value"
+  },
+  "create does>": {
+    "prefix": "does",
+    "body": [
+      ": ${1:name} ( ${2:n \"name\" --} )",
+      "  create ${3:,}",
+      "  does> ( ${4:-- x} )  $0 ;"
+    ],
+    "description": "Definierendes Wort mit create ... does>"
+  },
+  "Abschnitt": {
+    "prefix": "section",
+    "body": [
+      "\\\\ -------------------------------------------------------------------",
+      "\\\\  ${1:Titel}",
+      "\\\\ -------------------------------------------------------------------",
+      "",
+      "$0"
+    ],
+    "description": "Abschnittsüberschrift (erscheint in der Gliederung)"
+  }
+}
