@@ -1,51 +1,41 @@
 {
-  "name": "forth-sight",
-  "displayName": "forth-sight",
-  "description": "A simple syntax highlighter to make Forth code easier to read.",
-  "version": "0.1.0",
-  "publisher": "local-dev",
-  "license": "MIT",
+  "name": "forth-custom-syntax",
+  "displayName": "Forth Custom Syntax",
+  "version": "0.3.0",
   "engines": {
-    "vscode": "^1.90.0"
+    "vscode": "^1.80.0"
   },
-  "categories": [
-    "Other"
-  ],
   "activationEvents": [],
   "main": "./out/extension.js",
   "contributes": {
-    "commands": [
+    "languages": [
       {
-        "command": "forth-sight.helloWorld",
-        "title": "forth-sight: Hallo Welt anzeigen"
+        "id": "forth",
+        "aliases": [
+          "Forth",
+          "forth"
+        ],
+        "extensions": [
+          ".fs",
+          ".fth",
+          ".4th",
+          ".f",
+          ".seq"
+        ],
+        "configuration": "./language-configuration.json"
       }
     ],
-    "configuration": {
-      "title": "forth-sight",
-      "properties": {
-        "forth-sight.greeting": {
-          "type": "string",
-          "default": "Hallo aus forth-sight!",
-          "description": "Begrüßungstext, der beim Ausführen des Befehls angezeigt wird."
-        }
+    "grammars": [
+      {
+        "language": "forth",
+        "scopeName": "source.forth",
+        "path": "./syntaxes/forth.tmLanguage.json"
       }
-    }
-  },
-  "scripts": {
-    "vscode:prepublish": "npm run compile",
-    "compile": "node esbuild.mjs",
-    "watch": "node esbuild.mjs --watch",
-    "package": "npx @vscode/vsce package",
-    "typecheck": "tsc --noEmit",
-    "lint": "eslint src",
-    "test": "vitest run"
+    ]
   },
   "devDependencies": {
-    "@types/node": "^22.0.0",
-    "@types/vscode": "^1.90.0",
-    "@vscode/vsce": "^3.0.0",
-    "eslint": "^9.14.0",
-    "typescript": "^5.6.0",
-    "vitest": "^2.1.0"
+    "@types/node": "^20.0.0",
+    "@types/vscode": "^1.80.0",
+    "typescript": "^5.0.0"
   }
 }

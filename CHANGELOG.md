@@ -1,8 +1,12 @@
 # Changelog
 
+## SemVer v0.3.0
+
+- 2026-11-12 (6ab63f2): feat: add first draft
+
 ## SemVer v0.1.0
 
-- 2026-11-12 (2fdc911): initial commit
+- 2026-11-12 (84206fd): initial commit
 
 ## Unreleased
 
