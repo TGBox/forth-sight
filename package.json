@@ -2,7 +2,7 @@
   "name": "forth-sight",
   "displayName": "Forth Sight",
   "description": "A simple syntax highlighter and code navigation extension to make Forth code easier to read.",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "publisher": "local-dev",
   "license": "MIT",
   "engines": {
