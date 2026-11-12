@@ -5,8 +5,10 @@
 AGENTS.md
 src/**
 tests/**
+testdata/**
 .gitignore
 tsconfig.json
 esbuild.mjs
 **/*.map
 **/*.ts
+eslint.config.mjs

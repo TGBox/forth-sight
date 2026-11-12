@@ -2,14 +2,16 @@
   "name": "forth-sight",
   "displayName": "Forth Sight",
   "description": "A simple syntax highlighter and code navigation extension to make Forth code easier to read.",
-  "version": "0.3.0",
+  "version": "1.0.0",
   "publisher": "local-dev",
   "license": "MIT",
   "engines": {
     "vscode": "^1.90.0"
   },
   "categories": [
-    "Programming Languages"
+    "Programming Languages",
+    "Linters",
+    "Snippets"
   ],
   "activationEvents": [],
   "main": "./out/extension.js",
@@ -37,7 +39,120 @@
         "scopeName": "source.forth",
         "path": "./syntaxes/forth.tmLanguage.json"
       }
-    ]
+    ],
+    "snippets": [
+      {
+        "language": "forth",
+        "path": "./snippets/forth.json"
+      }
+    ],
+    "commands": [
+      {
+        "command": "forth-sight.loadFile",
+        "title": "Datei in gforth laden",
+        "category": "Forth",
+        "icon": "$(play)"
+      },
+      {
+        "command": "forth-sight.sendSelection",
+        "title": "Auswahl oder Zeile an gforth senden",
+        "category": "Forth"
+      },
+      {
+        "command": "forth-sight.startRepl",
+        "title": "gforth-REPL (neu) starten",
+        "category": "Forth"
+      },
+      {
+        "command": "forth-sight.addKnownWord",
+        "title": "Wort als bekannt eintragen",
+        "category": "Forth"
+      }
+    ],
+    "menus": {
+      "commandPalette": [
+        {
+          "command": "forth-sight.loadFile",
+          "when": "editorLangId == forth"
+        },
+        {
+          "command": "forth-sight.sendSelection",
+          "when": "editorLangId == forth"
+        },
+        {
+          "command": "forth-sight.addKnownWord",
+          "when": "false"
+        }
+      ],
+      "editor/title/run": [
+        {
+          "command": "forth-sight.loadFile",
+          "when": "resourceLangId == forth",
+          "group": "navigation"
+        }
+      ],
+      "editor/context": [
+        {
+          "command": "forth-sight.sendSelection",
+          "when": "editorLangId == forth",
+          "group": "9_forth@1"
+        }
+      ]
+    },
+    "keybindings": [
+      {
+        "command": "forth-sight.sendSelection",
+        "key": "ctrl+enter",
+        "mac": "cmd+enter",
+        "when": "editorTextFocus && editorLangId == forth"
+      }
+    ],
+    "configuration": {
+      "title": "Forth Sight",
+      "properties": {
+        "forth-sight.diagnostics.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Forth-Dateien auf Probleme prüfen und diese im Editor anzeigen."
+        },
+        "forth-sight.diagnostics.unknownWords": {
+          "type": "boolean",
+          "default": true,
+          "description": "Wörter melden, die weder im Arbeitsbereich definiert noch als eingebaute Wörter (Forth-2012, gforth) bekannt sind."
+        },
+        "forth-sight.diagnostics.redefinitions": {
+          "type": "boolean",
+          "default": true,
+          "description": "Hinweis anzeigen, wenn ein Wort in derselben Datei erneut definiert wird oder ein eingebautes Wort überdeckt."
+        },
+        "forth-sight.diagnostics.stackEffects": {
+          "type": "boolean",
+          "default": true,
+          "description": "Stack-Kommentare von Colon-Definitionen mit dem tatsächlichen Stack-Effekt des Rumpfs vergleichen."
+        },
+        "forth-sight.diagnostics.knownWords": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [],
+          "description": "Zusätzliche Wörter, die nicht als unbekannt gemeldet werden (z. B. Wörter des verwendeten Forth-Systems)."
+        },
+        "forth-sight.gforth.path": {
+          "type": "string",
+          "default": "gforth",
+          "description": "Pfad zum gforth-Programm."
+        },
+        "forth-sight.gforth.arguments": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [],
+          "description": "Zusätzliche Kommandozeilenargumente für gforth."
+        }
+      }
+    }
   },
   "scripts": {
     "vscode:prepublish": "npm run compile",
@@ -49,11 +164,13 @@
     "test": "vitest run"
   },
   "devDependencies": {
+    "@eslint/js": "^9.14.0",
     "@types/node": "^22.0.0",
     "@types/vscode": "^1.90.0",
     "@vscode/vsce": "^3.0.0",
     "eslint": "^9.14.0",
     "typescript": "^5.6.0",
+    "typescript-eslint": "^8.40.0",
     "vitest": "^2.1.0"
   }
 }
