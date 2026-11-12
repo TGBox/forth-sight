@@ -1,10 +1,16 @@
 {
-  "name": "forth-custom-syntax",
-  "displayName": "Forth Custom Syntax",
+  "name": "forth-sight",
+  "displayName": "Forth Sight",
+  "description": "A simple syntax highlighter and code navigation extension to make Forth code easier to read.",
   "version": "0.3.0",
+  "publisher": "local-dev",
+  "license": "MIT",
   "engines": {
-    "vscode": "^1.80.0"
+    "vscode": "^1.90.0"
   },
+  "categories": [
+    "Programming Languages"
+  ],
   "activationEvents": [],
   "main": "./out/extension.js",
   "contributes": {
@@ -33,9 +39,21 @@
       }
     ]
   },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "package": "npx @vscode/vsce package",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint src",
+    "test": "vitest run"
+  },
   "devDependencies": {
-    "@types/node": "^20.0.0",
-    "@types/vscode": "^1.80.0",
-    "typescript": "^5.0.0"
+    "@types/node": "^22.0.0",
+    "@types/vscode": "^1.90.0",
+    "@vscode/vsce": "^3.0.0",
+    "eslint": "^9.14.0",
+    "typescript": "^5.6.0",
+    "vitest": "^2.1.0"
   }
 }
