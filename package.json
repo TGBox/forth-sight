@@ -2,7 +2,7 @@
   "name": "forth-sight",
   "displayName": "Forth Sight",
   "description": "A simple syntax highlighter and code navigation extension to make Forth code easier to read.",
-  "version": "1.0.1",
+  "version": "1.1.0",
   "publisher": "local-dev",
   "license": "MIT",
   "engines": {
@@ -138,6 +138,42 @@
           "default": [],
           "description": "Zusätzliche Wörter, die nicht als unbekannt gemeldet werden (z. B. Wörter des verwendeten Forth-Systems)."
         },
+        "forth-sight.dictionary.bundled": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "data-al"
+            ]
+          },
+          "default": [
+            "data-al"
+          ],
+          "description": "Mitgelieferte Wörterbücher, deren Wörter als bekannt gelten und in Hover und Autovervollständigung erscheinen (data-al: Win32Forth-Kern und Data-AL-Anwendung)."
+        },
+        "forth-sight.dictionary.files": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [],
+          "description": "Zusätzliche Wörterbuchdateien, relativ zum Arbeitsbereich oder absolut: Wortlisten (ein Wort je Zeile, z. B. die Ausgabe von WORDS) oder .json-Dateien mit Stack-Kommentar und Beschreibung je Wort."
+        },
+        "forth-sight.dictionary.useForthLspConfig": {
+          "type": "boolean",
+          "default": true,
+          "description": "Wörter aus der forth-lsp-Konfiguration des Arbeitsbereichs übernehmen (.forth-lsp.toml: word_files und [[builtin.words]])."
+        },
+        "forth-sight.index.exclude": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [
+            "**/node_modules/**"
+          ],
+          "description": "Glob-Muster für Dateien und Ordner, die nicht indiziert werden (z. B. **/obsolete/**)."
+        },
         "forth-sight.gforth.path": {
           "type": "string",
           "default": "gforth",
@@ -159,6 +195,7 @@
     "compile": "tsc -p ./",
     "watch": "tsc -watch -p ./",
     "package": "npx @vscode/vsce package",
+    "dictionary": "npm run compile && node out/tools/buildDictionary.js",
     "typecheck": "tsc --noEmit",
     "lint": "eslint src",
     "test": "vitest run"

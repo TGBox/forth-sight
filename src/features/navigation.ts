@@ -9,7 +9,7 @@ const VARIABLE_KINDS = new Set(['variable', '2variable', 'fvariable', 'value', '
 const FIELD_KINDS = new Set(['field:', 'cfield:', 'ffield:', '2field:', '+field', 'field']);
 
 export function symbolKind(definition: Definition): vscode.SymbolKind {
-  if (FUNCTION_KINDS.has(definition.kind)) return vscode.SymbolKind.Function;
+  if (definition.isColon || FUNCTION_KINDS.has(definition.kind)) return vscode.SymbolKind.Function;
   if (CONSTANT_KINDS.has(definition.kind)) return vscode.SymbolKind.Constant;
   if (VARIABLE_KINDS.has(definition.kind)) return vscode.SymbolKind.Variable;
   if (FIELD_KINDS.has(definition.kind)) return vscode.SymbolKind.Field;

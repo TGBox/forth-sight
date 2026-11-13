@@ -1,5 +1,6 @@
 import { getBuiltin } from './builtins';
-import { parseForth, type Definition, type ParseContext, type ParsedFile, type Reference } from './parser';
+import { Dictionary } from './dictionary';
+import { isStructureWord, parseForth, type Definition, type ParseContext, type ParsedFile, type Reference } from './parser';
 import { parseStackEffect, type StackEffect } from './stackComment';
 import type { Token } from './tokenizer';
 
@@ -36,6 +37,10 @@ const KIND_EFFECTS: Record<string, StackEffect> = {
   marker: { in: 0, out: 0 },
 };
 
+function emptyContext(): ParseContext {
+  return { definers: new Set(), parsers: new Set(), quoteWords: new Set() };
+}
+
 function sameSet(a: ReadonlySet<string>, b: ReadonlySet<string>): boolean {
   if (a.size !== b.size) return false;
   for (const item of a) if (!b.has(item)) return false;
@@ -55,8 +60,30 @@ export function definitionEffect(definition: Definition): StackEffect | null {
 export class WorkspaceIndex {
   private readonly texts = new Map<string, string>();
   private readonly files = new Map<string, ParsedFile>();
-  private context: ParseContext = { definers: new Set(), parsers: new Set() };
+  private context: ParseContext = emptyContext();
   private byName: Map<string, DefinitionEntry[]> | null = null;
+  private externalWords = new Dictionary();
+
+  /** Words known from word lists and dictionary files rather than from indexed source. */
+  get dictionary(): Dictionary {
+    return this.externalWords;
+  }
+
+  /** Replaces the dictionary and re-parses the files if it changes how they are read. */
+  setDictionary(dictionary: Dictionary): void {
+    this.externalWords = dictionary;
+    this.settle();
+  }
+
+  /** True if the word is defined in the workspace, built in, listed in the dictionary or part of the syntax. */
+  isKnown(name: string): boolean {
+    return (
+      this.isDefined(name) ||
+      getBuiltin(name) !== undefined ||
+      this.externalWords.has(name) ||
+      isStructureWord(name.toLowerCase())
+    );
+  }
 
   /** Adds or replaces files and re-parses whatever depends on them. */
   update(entries: Iterable<readonly [uri: string, text: string]>): void {
@@ -76,7 +103,7 @@ export class WorkspaceIndex {
   clear(): void {
     this.texts.clear();
     this.files.clear();
-    this.context = { definers: new Set(), parsers: new Set() };
+    this.context = emptyContext();
     this.byName = null;
   }
 
@@ -86,14 +113,23 @@ export class WorkspaceIndex {
     for (let round = 0; round < 5; round++) {
       const definers = new Set<string>();
       const parsers = new Set<string>();
+      const quoteWords = new Set(this.externalWords.quoteWords());
       for (const file of this.files.values()) {
         for (const definition of file.definitions) {
-          if (definition.definer) definers.add(definition.name.toLowerCase());
-          else if (definition.parsing) parsers.add(definition.name.toLowerCase());
+          const lower = definition.name.toLowerCase();
+          if (definition.definer) definers.add(lower);
+          else if (definition.parsing) parsers.add(lower);
+          if (lower.startsWith('"')) quoteWords.add(lower);
         }
       }
-      if (sameSet(definers, this.context.definers) && sameSet(parsers, this.context.parsers)) break;
-      this.context = { definers, parsers };
+      if (
+        sameSet(definers, this.context.definers) &&
+        sameSet(parsers, this.context.parsers) &&
+        sameSet(quoteWords, this.context.quoteWords)
+      ) {
+        break;
+      }
+      this.context = { definers, parsers, quoteWords };
       for (const [uri, text] of this.texts) this.files.set(uri, parseForth(text, this.context));
     }
     this.byName = null;

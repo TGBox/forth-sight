@@ -59,5 +59,15 @@ export function buildHoverMarkdown(
     );
   }
 
+  // The dictionary describes words whose source is not part of the workspace.
+  const known = entries.length === 0 ? index.dictionary.get(word) : undefined;
+  if (known) {
+    const stack = known.stack ? ` ${inlineCode(known.stack)}` : '';
+    const origin = known.source ? `, ${escapeMarkdown(known.source)}` : '';
+    let text = `**${inlineCode(known.name)}**${stack} — *Wörterbuch ${escapeMarkdown(known.dictionary)}${origin}*\n`;
+    if (known.description) text += `\n${known.description.split('\n').map(escapeMarkdown).join('  \n')}\n`;
+    parts.push(text);
+  }
+
   return parts.length > 0 ? parts.join('\n---\n\n') : null;
 }

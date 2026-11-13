@@ -503,18 +503,60 @@ export const DEFINERS: ReadonlySet<string> = new Set([
   'value', '2value', 'fvalue', 'create', 'defer', 'user', 'buffer:', 'marker', 'synonym',
   'alias', 'vocabulary', 'field:', 'cfield:', 'ffield:', '2field:', '+field', 'field',
   'begin-structure', 'end-struct',
+  // Win32Forth / Data-AL: colon-like definitions
+  'is:', 'sel:', 'test:',
+  // Win32Forth / Data-AL: classes, DLL calls, structures and database tables
+  '-method', '+method', 'subclass:', ';subclass:', 'reorderer', 'proc_stdcall', 'proc_cdecl',
+  'callback', 'opt-winlibrary:', 'enum', 'sized', '#define', 'viewwindow',
+  'dbsingle', 'dbdate', 'dbbytes', 'dbxtime', 'dbsvar', 'indexed', 'db-field', 'total-buffer',
+  'is-record', 'wfields', 'combined',
 ]);
+
+/** Defining words that start a definition with a body, like ":". */
+export const COLON_WORDS: ReadonlySet<string> = new Set([':', 'is:', 'sel:', 'test:']);
+
+/** Words that start a definition without a name. */
+export const ANONYMOUS_COLON_WORDS: ReadonlySet<string> = new Set([':noname', '::', ':f:']);
+
+/** Defining words that take two names, e.g. "IS-RECORD azschein AZSCHEIN". */
+export const DOUBLE_DEFINERS: ReadonlySet<string> = new Set(['is-record', 'wfields', 'combined']);
+
+/** Words that end a CODE definition. */
+export const CODE_END_WORDS: ReadonlySet<string> = new Set(['end-code', 'c;', ';c']);
+
+/**
+ * True for words that end a colon definition: ";" and dialect words such as ";IS",
+ * ";AND" or ";TEST". ";]" ends a quotation and ";code" continues the definition.
+ */
+export function isDefinitionEnd(lower: string): boolean {
+  return lower.startsWith(';') && lower !== ';]' && lower !== ';code';
+}
 
 /** Immediate words that parse the next token even inside a colon definition. */
 export const IMMEDIATE_PARSERS: ReadonlySet<string> = new Set([
   '[char]', "[']", 'postpone', '[compile]', 'to', '+to', 'is', 'action-of',
   '[defined]', '[undefined]', '[ifdef]', '[ifundef]',
+  // Win32Forth / Data-AL
+  ';is', 'call', 'localalloc:', '#ifdef', '#ifndef', '\\+', '\\-',
 ]);
 
 /** Non-immediate words that parse the next token when interpreted. */
 export const INTERPRET_PARSERS: ReadonlySet<string> = new Set([
   'char', "'", 'include', 'require', 'needs', 'see', 'locate', 'forget',
+  // Win32Forth / Data-AL
+  'hi', '?hi', 'fload', 'sys-fload', 'cd', 'winlibrary',
+]);
+
+/**
+ * Parsing words whose operand must follow on the same line. Without one they
+ * stand alone (a bare "CD" prints the current directory).
+ */
+export const SAME_LINE_PARSERS: ReadonlySet<string> = new Set([
+  'hi', '?hi', 'fload', 'sys-fload', 'cd', 'winlibrary', '\\+', '\\-', '#ifdef', '#ifndef',
 ]);
 
 /** Standard words that start a string running up to the next double quote. */
-export const STRING_WORDS: ReadonlySet<string> = new Set(['s"', '."', 'c"', 'abort"', 's\\"', '.\\"', ',"']);
+export const STRING_WORDS: ReadonlySet<string> = new Set(['s"', '."', 'c"', 'abort"', 's\\"', '.\\"', ',"', "s'"]);
+
+/** String words that are delimited by a character other than the double quote. */
+export const STRING_DELIMITERS: Readonly<Record<string, string>> = { "s'": "'" };

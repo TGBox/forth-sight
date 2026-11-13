@@ -1,12 +1,26 @@
 import * as vscode from 'vscode';
+import type { Dictionary } from './core/dictionary';
+import { decodeSource } from './core/encoding';
 import type { Definition, ParsedFile } from './core/parser';
 import type { Token } from './core/tokenizer';
 import { WorkspaceIndex } from './core/workspaceIndex';
 
 export const FORTH_LANGUAGE = 'forth';
-const FORTH_GLOB = '**/*.{fs,fth,4th,f,seq}';
-const EXCLUDE_GLOB = '**/node_modules/**';
+// Both cases are listed because glob matching is case-sensitive on some systems and
+// older code bases mix them (PX.F next to dump.f).
+const FORTH_GLOB = '**/*.{fs,fth,4th,f,seq,FS,FTH,4TH,F,SEQ}';
+const DEFAULT_EXCLUDES = ['**/node_modules/**'];
 const CHANGE_DELAY_MS = 300;
+
+/** Glob for the files and folders that are left out of the index, or null for none. */
+function excludeGlob(): string | null {
+  const patterns = vscode.workspace
+    .getConfiguration('forth-sight')
+    .get<string[]>('index.exclude', DEFAULT_EXCLUDES)
+    .filter(pattern => pattern.trim());
+  if (patterns.length === 0) return null;
+  return patterns.length === 1 ? patterns[0] : `{${patterns.join(',')}}`;
+}
 
 export function isForth(document: vscode.TextDocument): boolean {
   return document.languageId === FORTH_LANGUAGE;
@@ -64,9 +78,15 @@ export class IndexService implements vscode.Disposable {
     );
   }
 
+  /** Replaces the dictionary of words that are known without being defined in the workspace. */
+  setDictionary(dictionary: Dictionary): void {
+    this.index.setDictionary(dictionary);
+    this.changeEmitter.fire();
+  }
+
   /** Indexes all Forth files of the workspace and all open Forth documents. */
   async initialize(): Promise<void> {
-    const uris = await vscode.workspace.findFiles(FORTH_GLOB, EXCLUDE_GLOB);
+    const uris = await vscode.workspace.findFiles(FORTH_GLOB, excludeGlob());
     const entries: Array<readonly [string, string]> = [];
     await Promise.all(
       uris.map(async uri => {
@@ -79,6 +99,7 @@ export class IndexService implements vscode.Disposable {
       entries.push([document.uri.toString(), document.getText()]);
       this.versions.set(document.uri.toString(), document.version);
     }
+    this.index.clear();
     this.index.update(entries);
     this.ready = true;
     this.changeEmitter.fire();
@@ -119,7 +140,7 @@ export class IndexService implements vscode.Disposable {
 
   private async read(uri: vscode.Uri): Promise<string | undefined> {
     try {
-      return new TextDecoder('utf-8').decode(await vscode.workspace.fs.readFile(uri));
+      return decodeSource(await vscode.workspace.fs.readFile(uri));
     } catch {
       return undefined;
     }

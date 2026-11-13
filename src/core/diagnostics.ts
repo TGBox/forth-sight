@@ -3,6 +3,8 @@ import type { Problem } from './parser';
 import { analyzeDefinition } from './stackAnalysis';
 import type { WorkspaceIndex } from './workspaceIndex';
 
+const METHOD_KINDS = new Set(['-method', '+method', 'sel:']);
+
 export interface DiagnosticOptions {
   unknownWords: boolean;
   redefinitions: boolean;
@@ -32,12 +34,12 @@ export function computeDiagnostics(
     for (const reference of file.references) {
       if (reference.local || reference.quiet) continue;
       const lower = reference.name.toLowerCase();
-      if (getBuiltin(lower) || index.isDefined(lower) || options.knownWords.has(lower)) continue;
+      if (index.isKnown(lower) || options.knownWords.has(lower)) continue;
       problems.push({
         line: reference.line,
         col: reference.col,
         endCol: reference.col + reference.name.length,
-        message: `Unbekanntes Wort '${reference.name}': weder im Arbeitsbereich definiert noch als eingebautes Wort bekannt.`,
+        message: `Unbekanntes Wort '${reference.name}': weder im Arbeitsbereich definiert noch als eingebautes Wort oder aus einem Wörterbuch bekannt.`,
         severity: 'warning',
         code: 'unknown-word',
       });
@@ -45,12 +47,15 @@ export function computeDiagnostics(
   }
 
   if (options.redefinitions) {
+    // Keyed by the exact spelling: systems that distinguish case define "az-pat" next to "AZ-PAT".
     const seen = new Map<string, number>();
     for (const definition of file.definitions) {
       // Definitions inside [if] ... [then] are usually deliberate alternatives.
       if (definition.conditional) continue;
+      // A method is declared first and then implemented, possibly by several classes.
+      if (METHOD_KINDS.has(definition.kind)) continue;
       const lower = definition.name.toLowerCase();
-      const previous = seen.get(lower);
+      const previous = seen.get(definition.name);
       const range = { line: definition.line, col: definition.col, endCol: definition.col + definition.name.length };
       if (previous !== undefined) {
         problems.push({
@@ -67,7 +72,7 @@ export function computeDiagnostics(
           code: 'shadows-builtin',
         });
       }
-      seen.set(lower, definition.line);
+      seen.set(definition.name, definition.line);
     }
   }
 

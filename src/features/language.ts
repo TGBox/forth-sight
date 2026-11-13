@@ -11,6 +11,8 @@ const TOKEN_MODIFIERS = ['declaration', 'readonly'];
 const LEGEND = new vscode.SemanticTokensLegend(TOKEN_TYPES, TOKEN_MODIFIERS);
 const DECLARATION = 1;
 const READONLY = 2;
+/** Upper limit of dictionary words offered per completion request. */
+const DICTIONARY_COMPLETIONS = 500;
 
 function displayPath(uri: string): string {
   return vscode.workspace.asRelativePath(vscode.Uri.parse(uri));
@@ -107,6 +109,7 @@ export function registerLanguageFeatures(service: IndexService): vscode.Disposab
 
       for (const [lower, builtin] of BUILTINS) {
         if (seen.has(lower)) continue;
+        seen.add(lower);
         const item = new vscode.CompletionItem(builtin.name, vscode.CompletionItemKind.Keyword);
         item.detail = `( ${builtin.stack} )`;
         item.documentation = `${builtin.description} (${builtin.category})`;
@@ -114,7 +117,24 @@ export function registerLanguageFeatures(service: IndexService): vscode.Disposab
         item.sortText = `1${lower}`;
         items.push(item);
       }
-      return items;
+
+      // A dictionary can hold tens of thousands of words, so only those matching what
+      // has been typed are offered, and the list is requested again as typing continues.
+      const typed = token ? token.text.slice(0, Math.max(position.character - token.col, 0)) : '';
+      if (index.dictionary.size === 0 || !typed) return items;
+      for (const word of index.dictionary.startingWith(typed, DICTIONARY_COMPLETIONS)) {
+        const lower = word.name.toLowerCase();
+        // Spellings that differ only in case are all offered: they may be different words.
+        if (seen.has(lower)) continue;
+        const item = new vscode.CompletionItem(word.name, vscode.CompletionItemKind.Function);
+        item.detail = word.stack || `Wörterbuch ${word.dictionary}`;
+        const origin = word.source ? `${word.dictionary}, ${word.source}` : word.dictionary;
+        item.documentation = word.description ? `${word.description}\n\nWörterbuch ${origin}` : `Wörterbuch ${origin}`;
+        item.range = range;
+        item.sortText = `2${lower}`;
+        items.push(item);
+      }
+      return new vscode.CompletionList(items, true);
     },
   };
 

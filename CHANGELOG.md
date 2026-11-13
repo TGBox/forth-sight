@@ -1,8 +1,12 @@
 # Changelog
 
+## SemVer v1.1.0
+
+- 2026-11-13 (83a9157): feat: add new reference dictionaries generated from our Forth code base
+
 ## SemVer v1.0.1
 
-- 2026-11-12 (260bc55): fix: update README and add an instruction for installing this extension from the artifact in the repo
+- 2026-11-12 (707328d): fix: update README and add an instruction for installing this extension from the artifact in the repo
 - 2026-11-12 (77408dc): fix: fix mismatched lockfile
 
 ## SemVer v1.0.0

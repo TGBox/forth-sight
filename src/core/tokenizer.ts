@@ -1,4 +1,15 @@
-import { DEFINERS, IMMEDIATE_PARSERS, INTERPRET_PARSERS, STRING_WORDS } from './builtins';
+import {
+  ANONYMOUS_COLON_WORDS,
+  CODE_END_WORDS,
+  COLON_WORDS,
+  DEFINERS,
+  IMMEDIATE_PARSERS,
+  INTERPRET_PARSERS,
+  isDefinitionEnd,
+  SAME_LINE_PARSERS,
+  STRING_DELIMITERS,
+  STRING_WORDS,
+} from './builtins';
 
 export type TokenKind =
   /** An ordinary whitespace-delimited word or number. */
@@ -7,7 +18,7 @@ export type TokenKind =
   | 'operand'
   /** A backslash comment running to the end of the line. */
   | 'lineComment'
-  /** A parenthesis comment. */
+  /** A parenthesis comment, or a block comment in double parentheses or C style. */
   | 'parenComment'
   /** The text of a string, without its delimiters. */
   | 'string';
@@ -26,6 +37,10 @@ export interface Token {
 }
 
 const WHITESPACE = /\s/;
+const NO_WORDS: ReadonlySet<string> = new Set();
+// Win32Forth / Data-AL control words that start with a double quote.
+const QUOTE_CONTROL_WORDS: ReadonlySet<string> = new Set(['"case', '"endcase', '"end-case', '"of']);
+const LOCALS_CLOSERS: ReadonlyMap<string, string> = new Map([['{', '}'], ['{:', ':}']]);
 
 /** True for words such as s" or a user-defined feld" that parse a string up to the next quote. */
 export function isStringWord(lower: string): boolean {
@@ -36,8 +51,11 @@ export function isStringWord(lower: string): boolean {
  * Splits Forth source into tokens. Because Forth has no fixed syntax, the tokenizer
  * follows the standard parsing words (comments, strings, defining words) and tracks
  * whether it is inside a colon definition, where non-immediate parsing words do not parse.
+ *
+ * quoteWords: lower-cased names of known words that start with a double quote (such as
+ * ">ASCIIZ in Win32Forth); they are words rather than the start of a string literal.
  */
-export function tokenize(text: string): Token[] {
+export function tokenize(text: string, quoteWords: ReadonlySet<string> = NO_WORDS): Token[] {
   const tokens: Token[] = [];
   const length = text.length;
   let offset = 0;
@@ -45,6 +63,11 @@ export function tokenize(text: string): Token[] {
   let lineStart = 0;
   let compiling = false;
   let pendingOperand: string | null = null;
+  // The operand has to start before this offset (end of the line of its parsing word).
+  let pendingLimit = Infinity;
+  let inCode = false;
+  // Closing word of the locals declaration being read, e.g. "}".
+  let localsCloser: string | null = null;
 
   // Advances the line bookkeeping up to the given offset (offsets only ever grow).
   let scanned = 0;
@@ -80,16 +103,28 @@ export function tokenize(text: string): Token[] {
     return end;
   };
 
-  // Reads a string body starting at `from` up to the closing quote on the same line.
-  const readString = (from: number, escapes: boolean, extra?: Partial<Token>): number => {
+  // Reads a string body starting at `from` up to the closing delimiter on the same line.
+  const readString = (from: number, escapes: boolean, extra?: Partial<Token>, delimiter = '"'): number => {
     const limit = endOfLine(from);
     let end = from;
-    while (end < limit && text[end] !== '"') {
+    while (end < limit && text[end] !== delimiter) {
       if (escapes && text[end] === '\\' && end + 1 < limit) end++;
       end++;
     }
     push('string', from, end, extra);
     return end < limit ? end + 1 : end;
+  };
+
+  // True if a whitespace-delimited token equal to `word` follows on the current line.
+  const followsOnLine = (from: number, word: string): boolean =>
+    text.slice(from, endOfLine(from)).toLowerCase().split(/\s+/).includes(word);
+
+  // Reads a block comment up to its closing word; returns the offset after it.
+  const readBlockComment = (start: number, from: number, closer: string): number => {
+    const close = text.indexOf(closer, from);
+    const end = close < 0 ? length : close + closer.length;
+    push('parenComment', start, end);
+    return end;
   };
 
   while (offset < length) {
@@ -101,8 +136,18 @@ export function tokenize(text: string): Token[] {
     const lower = text.slice(start, offset).toLowerCase();
 
     if (pendingOperand !== null) {
-      push('operand', start, offset, { operandOf: pendingOperand });
+      const owner = pendingOperand;
       pendingOperand = null;
+      if (start < pendingLimit) {
+        push('operand', start, offset, { operandOf: owner });
+        continue;
+      }
+    }
+
+    if (localsCloser !== null) {
+      // Inside "{ a b \ c -- d }" the backslash separates uninitialised locals.
+      push('word', start, offset);
+      if (lower === localsCloser) localsCloser = null;
       continue;
     }
 
@@ -119,6 +164,15 @@ export function tokenize(text: string): Token[] {
       continue;
     }
 
+    if (lower === '((') {
+      offset = readBlockComment(start, offset, '))');
+      continue;
+    }
+    if (lower === '/*') {
+      offset = readBlockComment(start, offset, '*/');
+      continue;
+    }
+
     if (lower === '.(') {
       push('word', start, offset);
       const from = Math.min(offset + 1, length);
@@ -129,36 +183,62 @@ export function tokenize(text: string): Token[] {
       continue;
     }
 
-    if (lower.startsWith('"') && lower.length > 1) {
+    if (lower.startsWith('"') && lower.length > 1 && !quoteWords.has(lower) && !QUOTE_CONTROL_WORDS.has(lower)) {
       // gforth string literal: "text" (may contain spaces).
       if (lower.endsWith('"')) {
         push('string', start + 1, offset - 1, { literal: true });
-      } else {
-        offset = readString(start + 1, true, { literal: true });
+        continue;
       }
-      continue;
+      // Without a closing quote on the line it is a word such as "CASE or ">ASCIIZ.
+      if (text.slice(offset, endOfLine(offset)).includes('"')) {
+        offset = readString(start + 1, true, { literal: true });
+        continue;
+      }
     }
 
     push('word', start, offset);
 
+    if (inCode) {
+      // Assembler source: brackets and other words have no Forth meaning here.
+      const restart = start === lineStart && (lower === ':' || lower === 'code');
+      if (!restart && !CODE_END_WORDS.has(lower)) continue;
+      inCode = false;
+      // A definition starting in the first column ends a CODE definition whose end word was missed.
+      if (!restart) continue;
+    }
+
     if (isStringWord(lower)) {
       // Exactly one delimiter character follows the string word.
       const from = offset < length && text[offset] !== '\n' && text[offset] !== '\r' ? offset + 1 : offset;
-      offset = readString(Math.min(from, length), lower.includes('\\'));
+      offset = readString(Math.min(from, length), lower.includes('\\'), undefined, STRING_DELIMITERS[lower]);
       continue;
     }
 
-    if (lower === ':') {
-      compiling = true;
+    const expectOperand = (): void => {
       pendingOperand = lower;
-    } else if (lower === ':noname' || lower === ']') {
+      pendingLimit = SAME_LINE_PARSERS.has(lower) ? endOfLine(offset) : Infinity;
+    };
+
+    const closer = LOCALS_CLOSERS.get(lower);
+    if (COLON_WORDS.has(lower)) {
       compiling = true;
-    } else if (lower === ';' || lower === '[') {
+      expectOperand();
+    } else if (ANONYMOUS_COLON_WORDS.has(lower) || lower === ']') {
+      compiling = true;
+    } else if (lower === 'make' && !compiling) {
+      // MAKE name ... ;AND assigns an anonymous definition to a deferred word.
+      compiling = true;
+      expectOperand();
+    } else if (lower === '[' || (compiling && isDefinitionEnd(lower))) {
       compiling = false;
+      if (IMMEDIATE_PARSERS.has(lower)) expectOperand();
+    } else if (compiling && closer !== undefined && followsOnLine(offset, closer)) {
+      localsCloser = closer;
     } else if (IMMEDIATE_PARSERS.has(lower)) {
-      pendingOperand = lower;
+      expectOperand();
     } else if (!compiling && (DEFINERS.has(lower) || INTERPRET_PARSERS.has(lower))) {
-      pendingOperand = lower;
+      expectOperand();
+      if (lower === 'code') inCode = true;
     }
   }
 
